@@ -1,4 +1,6 @@
 ﻿using Microsoft.EntityFrameworkCore;
+using EcommerceAPI.Models.Entities;
+using EcommerceAPI.Entities;
 
 namespace EcommerceAPI.Data
 {
@@ -8,7 +10,7 @@ namespace EcommerceAPI.Data
         public EcommerceDbContext(DbContextOptions<EcommerceDbContext> options) : base(options)
         {
         }
-        public DbSet<Models.Entities.User> Users { get; set; }
-         public DbSet<Entities.Product> products { get; set; }
+        public DbSet<User> Users { get; set; }
+         public DbSet<Product> products { get; set; }
     }
 }

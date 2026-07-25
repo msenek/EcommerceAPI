@@ -18,16 +18,10 @@ namespace EcommerceAPI.Repositories
             return await _context.Users.FirstOrDefaultAsync(u => u.Email == email);
         }
 
-        public async Task<User> AddAsync(User user)
+        public async Task AddAsync(User user)
         {
             await _context.Users.AddAsync(user);
             await _context.SaveChangesAsync();
-            return user;
-        }
-
-        Task IAuthRepository.AddAsync(User user)
-        {
-            return AddAsync(user);
         }
     }
 }

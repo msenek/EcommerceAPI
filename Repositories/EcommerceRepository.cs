@@ -1,5 +1,6 @@
 ﻿using EcommerceAPI.Data;
 using EcommerceAPI.Entities;
+using EcommerceAPI.Middleware;
 using EcommerceAPI.Repositories.Interfaces;
 using Microsoft.EntityFrameworkCore;
 
@@ -40,7 +41,10 @@ namespace EcommerceAPI.Repositories
         //GET ID
         public async Task<Product?> GetProductByIdAsync(int id)
         {
-            return await _context.products.FindAsync(id);
+            var product = await _context.products.FindAsync(id)
+            ?? throw new NotFoundException($"Product with ID {id} not found");
+
+            return product;
         }
 
         //POST
@@ -49,7 +53,6 @@ namespace EcommerceAPI.Repositories
             _context.products.Add(product);
             await _context.SaveChangesAsync();
             return product;
-
         }
 
         //DELETE

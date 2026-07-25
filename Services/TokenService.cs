@@ -15,40 +15,30 @@ namespace EcommerceAPI.Services
         {
             _configuration = configuration;
         }
+
         public string CreateToken(User user)
         {
-            // clave
-            string secretKey = _configuration["JwtSettings:SecretKey"]!;
+            string key = _configuration["Jwt:Key"]!;
 
-            //claims
             var claims = new List<Claim>
             {
-               new Claim(JwtRegisteredClaimNames.Name, user.Name),
-               new Claim(JwtRegisteredClaimNames.Email, user.Email)
+                new Claim(JwtRegisteredClaimNames.Name, user.Name),
+                new Claim(JwtRegisteredClaimNames.Email, user.Email),
+                new Claim(ClaimTypes.NameIdentifier, user.Id.ToString())
             };
 
-            var expiration = TimeSpan.FromHours(3);
-
-            var token = GenerateJwtToken(secretKey, claims, expiration);
-            return token;
-
-        }
-
-        //metodo
-        public string GenerateJwtToken(string secretKey, IEnumerable<Claim> claims, TimeSpan expiration)
-        {
-            var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(secretKey));
-
-            var creds = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
-
-            var token = new JwtSecurityToken
-                (
+            var token = new JwtSecurityToken(
+                issuer: _configuration["Jwt:Issuer"],
+                audience: _configuration["Jwt:Audience"],
                 claims: claims,
-                expires: DateTime.UtcNow.Add(expiration),
-                signingCredentials: creds
-                );
+                expires: DateTime.UtcNow.AddHours(
+                    _configuration.GetValue<int>("Jwt:ExpirationInHours")),
+                signingCredentials: new SigningCredentials(
+                    new SymmetricSecurityKey(Encoding.UTF8.GetBytes(key)),
+                    SecurityAlgorithms.HmacSha256)
+            );
+
             return new JwtSecurityTokenHandler().WriteToken(token);
         }
     }
-
 }

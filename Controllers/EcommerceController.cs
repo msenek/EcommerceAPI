@@ -1,7 +1,9 @@
-using Microsoft.AspNetCore.Mvc;
-using EcommerceAPI.Services.Interfaces;
 using EcommerceAPI.Models.DTOs;
-
+using EcommerceAPI.Services.Interfaces;
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
+using System.IdentityModel.Tokens.Jwt;
+using System.Security.Claims;
 namespace EcommerceAPI.Controllers
 {
     [ApiController]
@@ -25,36 +27,39 @@ namespace EcommerceAPI.Controllers
         public async Task<IActionResult> GetProductById(int id)
         {
             var product = await _service.GetProductByIdAsync(id);
-            if (product == null)
-            {
-                return NotFound();
-            }
+            
             return Ok(product);
         }
 
+        [Authorize]
         [HttpPost]
         public async Task<IActionResult> CreateProduct([FromBody] ProductRequestDTO request)
         {
-            var product = await _service.CreateProductAsync(request);
-            return Ok(product);
+            var userId = int.Parse(User.FindFirst(ClaimTypes.NameIdentifier)!.Value);
+
+            var product = await _service.CreateProductAsync(request, userId);
+
+            return CreatedAtAction(nameof(GetProductById), new { id = product.Id }, product);
         }
 
+        [Authorize]
         [HttpDelete("{id}")]
         public async Task<IActionResult> DeleteProduct(int id)
         {
+            var userId = int.Parse(User.FindFirst(ClaimTypes.NameIdentifier)!.Value);
+            
             var product = await _service.GetProductByIdAsync(id);
-            if (product == null)
-            {
-                return NotFound();
-            }
-            await _service.DeleteProductAsync(id);
+            await _service.DeleteProductAsync(id, userId);
             return NoContent();
         }
 
+        [Authorize]
         [HttpPut("{id}")]
         public async Task<IActionResult> UpdateProduct(int id, [FromBody] ProductRequestDTO request)
         {
-            await _service.UpdateProductAsync(id, request);
+            var userId = int.Parse(User.FindFirst(ClaimTypes.NameIdentifier)!.Value);
+
+            await _service.UpdateProductAsync(id, request, userId);
             return NoContent();
         }
     }

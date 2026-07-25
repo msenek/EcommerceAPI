@@ -21,7 +21,11 @@ namespace EcommerceAPI.Controllers
           
             await _authService.RegisterAsync(registerRequestDto);
 
-            return CreatedAtAction(nameof(RegisterAsync), new { message = "Register done susefully" });
+            return StatusCode(StatusCodes.Status201Created, new
+            {
+                Success = true,
+                Message = "Register done successfully."
+            });
         }
 
         [HttpPost("login")]

@@ -16,20 +16,30 @@ namespace EcommerceAPI.Services
             _tokenService = tokenService;
         }
 
-        public async Task RegisterAsync(RegisterRequestDTO RegisterRequestDto)
+        public async Task<AuthResponseDto> RegisterAsync(RegisterRequestDTO RegisterRequestDto)
         {
             var userEmail = await _authRepository.GetUserByEmailAsync(RegisterRequestDto.Email);
-
             if (userEmail != null)
-                throw new ConflictException("Email already exists");
+            {
+                throw new ConflictException("A user with this email already exists.");
+            }
 
             var user = new User
             {
-                Name = RegisterRequestDto.Name,
-                Email = RegisterRequestDto.Email,
+                Name = RegisterRequestDto.Name.Trim(),
+                Email = RegisterRequestDto.Email.Trim().ToLower(),
                 Password = BCrypt.Net.BCrypt.HashPassword(RegisterRequestDto.Password)
             };
             await _authRepository.AddAsync(user);
+            var token = _tokenService.CreateToken(user);
+
+            return new AuthResponseDto
+            {
+                UserId = user.Id,
+                Name = user.Name,
+                Email = user.Email,
+                AccessToken = token
+            };
         }
 
 
@@ -37,13 +47,9 @@ namespace EcommerceAPI.Services
         {
             var user = await _authRepository.GetUserByEmailAsync(LoginRequestDto.Email);
 
-            if (user == null)
-                throw new UnauthorizedException("Invalid credentials");
-
-            bool isValid = BCrypt.Net.BCrypt.Verify(LoginRequestDto.Password, user.Password);
-
+            bool isValid =  user != null && BCrypt.Net.BCrypt.Verify(LoginRequestDto.Password, user.Password);
             if (!isValid)
-                throw new UnauthorizedException("Invalid credentials");
+                throw new BadRequestException("Invalid email or password");
 
             var token = _tokenService.CreateToken(user);
             return token;
